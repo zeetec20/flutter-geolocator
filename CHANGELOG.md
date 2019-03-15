@@ -1,3 +1,8 @@
+## [3.0.2]
+
+* Added support to receive heading updates on iOS;
+* Moved to the latest version of Flutter SDK environment (>=2.1.0 <3.0.0)
+
 ## [3.0.1]
 
 * Updated dependencies on Permission Handler and Google API Availability to remove Kotlin dependency.
