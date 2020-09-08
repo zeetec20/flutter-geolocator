@@ -1,3 +1,7 @@
+## 6.0.1
+
+* iOS: make sure to set streamhandler to nil since this could cause a potential memory leak.
+
 ## 6.0.0+4
 
 * Android: fix crash when multiple permissions requests are make simultanuous (see issue [#513](https://github.com/Baseflow/flutter-geolocator/issues/513)).

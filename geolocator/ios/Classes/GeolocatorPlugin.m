@@ -11,23 +11,26 @@
 @interface GeolocatorPlugin() <FlutterStreamHandler>
 @property (strong, nonatomic) GeolocationHandler *geolocationHandler;
 @property (strong, nonatomic) PermissionHandler *permissionHandler;
+@property(nonatomic) FlutterEventChannel *eventChannel;
 @end
 
 @implementation GeolocatorPlugin {
     FlutterEventSink _eventSink;
+    FlutterEventChannel *_eventChannel;
 }
 
 + (void)registerWithRegistrar:(NSObject<FlutterPluginRegistrar>*)registrar {
     FlutterMethodChannel *methodChannel = [FlutterMethodChannel
                                            methodChannelWithName:@"flutter.baseflow.com/geolocator"
                                            binaryMessenger:registrar.messenger];
-    FlutterEventChannel *eventChannel = [FlutterEventChannel
-                                         eventChannelWithName:@"flutter.baseflow.com/geolocator_updates"
-                                         binaryMessenger:registrar.messenger];
     
     GeolocatorPlugin *instance = [[GeolocatorPlugin alloc] init];
+    instance.eventChannel = [FlutterEventChannel
+                             eventChannelWithName:@"flutter.baseflow.com/geolocator_updates"
+                             binaryMessenger:registrar.messenger];
+        
     [registrar addMethodCallDelegate:instance channel:methodChannel];
-    [eventChannel setStreamHandler:instance];
+    [instance.eventChannel setStreamHandler:instance];
 }
 
 - (void)handleMethodCall:(FlutterMethodCall*)call result:(FlutterResult)result {
@@ -45,7 +48,7 @@
         [self openSettings:result];
     } else if ([@"openLocationSettings" isEqualToString:call.method]) {
         [self openSettings:result];
-    } else { 
+    } else {
         result(FlutterMethodNotImplemented);
     }
 }
@@ -72,13 +75,13 @@
         CLLocationDistance distanceFilter = [LocationDistanceMapper toCLLocationDistance:(NSNumber *)arguments[@"distanceFilter"]];
         
         [[weakSelf geolocationHandler] startListeningWithDesiredAccuracy:accuracy
-                                                      distanceFilter:distanceFilter
-                                                       resultHandler:^(CLLocation *location) {
+                                                          distanceFilter:distanceFilter
+                                                           resultHandler:^(CLLocation *location) {
             [weakSelf onLocationDidChange: location];
         }
-                                                        errorHandler:^(NSString *errorCode, NSString *errorDescription){
+                                                            errorHandler:^(NSString *errorCode, NSString *errorDescription){
             [weakSelf onLocationFailureWithErrorCode:errorCode
-                                errorDescription:errorDescription];
+                                    errorDescription:errorDescription];
         }];
     }
      errorHandler:^(NSString *errorCode, NSString *errorDescription) {
@@ -92,6 +95,7 @@
 - (FlutterError *_Nullable)onCancelWithArguments:(id _Nullable)arguments {
     [[self geolocationHandler] stopListening];
     _eventSink = nil;
+    [_eventChannel setStreamHandler:nil];
     
     return nil;
 }
@@ -110,6 +114,7 @@
                                    message:errorDescription
                                    details:nil]);
     _eventSink = nil;
+    [_eventChannel setStreamHandler:nil];
 }
 
 - (void)onRequestPermission:(FlutterResult)result {
@@ -147,18 +152,18 @@
 
 - (void) openSettings:(FlutterResult)result {
     if (@available(iOS 10, *)) {
-      [[UIApplication sharedApplication]
-                    openURL:[NSURL URLWithString:UIApplicationOpenSettingsURLString]
-                    options:[[NSDictionary alloc] init]
-          completionHandler:^(BOOL success) {
+        [[UIApplication sharedApplication]
+         openURL:[NSURL URLWithString:UIApplicationOpenSettingsURLString]
+         options:[[NSDictionary alloc] init]
+         completionHandler:^(BOOL success) {
             result([[NSNumber alloc] initWithBool:success]);
-          }];
+        }];
     } else if (@available(iOS 8.0, *)) {
-      BOOL success = [[UIApplication sharedApplication]
-          openURL:[NSURL URLWithString:UIApplicationOpenSettingsURLString]];
-      result([[NSNumber alloc] initWithBool:success]);
+        BOOL success = [[UIApplication sharedApplication]
+                        openURL:[NSURL URLWithString:UIApplicationOpenSettingsURLString]];
+        result([[NSNumber alloc] initWithBool:success]);
     } else {
-      result([[NSNumber alloc] initWithBool:NO]);
+        result([[NSNumber alloc] initWithBool:NO]);
     }
 }
 
