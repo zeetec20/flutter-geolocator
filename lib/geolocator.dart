@@ -209,6 +209,12 @@ class Geolocator {
       return permission;
     }
   }
+  
+  Future<bool> getLocationPermissionCustom() async {
+    PermissionStatus permissionStatus = await _permissionHandler.requestPermissions(permissionLevel: LocationPermissionLevel.location);
+    if (permissionStatus == PermissionStatus.granted) return true;
+    else return false;
+  }
 
   void _handleInvalidPermissions(PermissionStatus permission) {
     if (permission == PermissionStatus.denied) {
